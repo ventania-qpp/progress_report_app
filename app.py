@@ -3,13 +3,11 @@ import pandas as pd
 import zipfile
 import io
 from datetime import datetime
-import imgkit
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 from fpdf import FPDF
 
 st.title("Progress Report Generator (CSV版)")
 
-#df = pd.read_csv("Point_Student.csv")
 # CSV アップロード
 uploaded = st.file_uploader("Upload the CSV file you downloaded from AppSheet")
 
@@ -20,14 +18,12 @@ if uploaded is None:
 # CSV 読み込み
 df = pd.read_csv(uploaded)
 
-
-# 選択リストソート方法
+# ソート方法
 sort_option = st.selectbox(
     "Sort students by",
     ["Name", "Corda", "Age"]
 )
 
-# Corda の順序リスト（Machiko さんのアプリと同じ）
 Corda_Name_EN_order = [
     "Gray", "Gray/Green", "Green", "Gray/Yellow",
     "Yellow", "Gray/Blue", "Blue", "Green/Yellow", "Advanced+"
@@ -43,36 +39,36 @@ elif sort_option == "Corda":
 elif sort_option == "Age":
     df = df.sort_values("Age", na_position="last")
 
-
-# 生徒選択（複数）
+# 生徒選択
 selected_students = st.multiselect(
     "Select students (multiple allowed)",
     df["Display_Name"].tolist()
 )
 
-# ダウンロード済みの記録
+# session_state 初期化
 if "downloaded" not in st.session_state:
     st.session_state["downloaded"] = set()
 
-# PDF生成ボタン
+# PDF生成
 if st.button("Create PDF"):
 
     st.session_state["pdfs"] = {}
-    st.session_state["downloaded"] = set()  # リセット
+    st.session_state["downloaded"] = set()
 
-    # Period 処理 最初の生徒の Period を使用して period_str作成
+    # Period
     if selected_students:
         first_student = df[df["Display_Name"] == selected_students[0]].iloc[0].to_dict()
-        period_raw = str(first_student["Period"])          # "2026/4/30"
+        period_raw = str(first_student["Period"])
         period_dt = datetime.strptime(period_raw, "%Y/%m/%d")
-        period_str = period_dt.strftime("%Y%m%d")          # "20260430"
-        st.session_state["period_str"] = period_str        # ← 追加
+        period_str = period_dt.strftime("%Y%m%d")
+        st.session_state["period_str"] = period_str
     else:
         st.session_state["period_str"] = "00000000"
 
-    with st.spinner("Generating PDFs..."): 
+    with st.spinner("Generating PDFs..."):
+
         for name in selected_students:
-            # 生徒データ取得
+
             student = df[df["Display_Name"] == name].iloc[0].to_dict()
 
             # Age 処理
@@ -83,61 +79,54 @@ if st.button("Create PDF"):
                 if student["Age"] >= 30:
                     student["Age"] = ""
 
+            # Corda
             corda = student["Corda_Name_EN"].strip()
             if corda not in Corda_Name_EN_order:
                 corda = "Gray"
 
             student["Corda_Name_EN"] = corda
-            student["Corda_Name_ENLower"] = (
-                corda.lower()
-                    .replace("/", "-")
-                    .replace("+", "-plus")
-            )
 
-            corda_pos_map = {
-                "Gray": 0,
-                "Gray/Green": 12.5,
-                "Green": 25,
-                "Gray/Yellow": 37.5,
-                "Yellow": 50,
-                "Gray/Blue": 65,
-                "Blue": 80,
-                "Green/Yellow": 90,
-                "Advanced+": 98
-            }
-            student["Corda_Name_ENPos"] = corda_pos_map.get(corda, 0)
+            # -----------------------------
+            # PNG テンプレートに文字を書き込む
+            # -----------------------------
+            base = Image.open("template.png").convert("RGB")
+            draw = ImageDraw.Draw(base)
 
-            # HTMLテンプレート読み込み
-            with open("template.html", "r", encoding="utf-8") as f:
-                html = f.read()
+            # フォント（Streamlit Cloud では DejaVu が使える）
+            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 48)
 
-            # 置換
-            for key, value in student.items():
-                html = html.replace("{" + key + "}", str(value))
-                
-            # HTML の {key} を置換した後のテキストをそのまま PDF に書く
-            for line in html.split("\n"):
-                pdf.multi_cell(0, 10, line)
-            
-            # PDF をバイトとして保存
+            # 例：名前・Corda・Age を配置（座標は調整してね）
+            draw.text((200, 300), f"Name: {student['Display_Name']}", fill="black", font=font)
+            draw.text((200, 400), f"Corda: {student['Corda_Name_EN']}", fill="black", font=font)
+            draw.text((200, 500), f"Age: {student['Age']}", fill="black", font=font)
+
+            # PNG を一時保存
+            base.save("temp_output.png")
+
+            # -----------------------------
+            # PNG → PDF
+            # -----------------------------
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.image("temp_output.png", x=0, y=0, w=210, h=297)  # A4 サイズ
+
             pdf.output("report.pdf")
+
             with open("report.pdf", "rb") as f:
                 pdf_bytes = f.read()
-            
-            st.session_state["pdfs"][name] = pdf_bytes            
+
+            st.session_state["pdfs"][name] = pdf_bytes
 
     st.success("PDF generation completed!")
 
-
-# 以下、rerun 後でも残る処理
+# ダウンロード画面
 if "pdfs" in st.session_state:
     count = len(st.session_state["pdfs"])
     st.subheader(f"PDF Download （{count} selected）")
 
     period_str = st.session_state.get("period_str", "00000000")
-    # -----------------------------
-    # ① 人数が多いときは ZIP を表示
-    # -----------------------------
+
+    # ZIP
     if count >= 10:
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "w") as zipf:
@@ -151,13 +140,10 @@ if "pdfs" in st.session_state:
             mime="application/zip"
         )
 
-    # -----------------------------
-    # ② 人数が少ないときは個別ボタン
-    # -----------------------------
+    # 個別
     else:
         for name in list(st.session_state["pdfs"].keys()):
 
-            # ダウンロード済みなら非表示
             if name in st.session_state["downloaded"]:
                 continue
 
@@ -174,9 +160,6 @@ if "pdfs" in st.session_state:
                 st.session_state["downloaded"].add(name)
                 st.rerun()
 
-    # -----------------------------
-    # クリアボタン
-    # -----------------------------
     st.markdown("---")
     if st.button("CLEAR"):
         if "pdfs" in st.session_state:
