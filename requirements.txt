@@ -4,4 +4,4 @@ oauth2client
 imgkit
 Pillow
 fpdf
-
+pandas
