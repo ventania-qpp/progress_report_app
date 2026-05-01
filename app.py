@@ -1,9 +1,11 @@
 import streamlit as st
 import pandas as pd
-from weasyprint import HTML
 import zipfile
 import io
 from datetime import datetime
+import imgkit
+from PIL import Image
+from fpdf import FPDF
 
 st.title("Progress Report Generator (CSV版)")
 
@@ -113,12 +115,26 @@ if st.button("Create PDF"):
             for key, value in student.items():
                 html = html.replace("{" + key + "}", str(value))
 
-            # PDF生成
-            pdf_bytes = HTML(string=html).write_pdf()
+            # HTML を一時ファイルとして保存
+            with open("temp.html", "w", encoding="utf-8") as f:
+                f.write(html)
+            
+            # HTML → PNG
+            imgkit.from_file("temp.html", "output.png")
+            
+            # PNG → PDF
+            image = Image.open("output.png")
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.image("output.png", x=10, y=10, w=180)
+            
+            # PDF をバイトとして保存
+            pdf.output("report.pdf")
+            with open("report.pdf", "rb") as f:
+                pdf_bytes = f.read()
 
-            # session_state に保存
             st.session_state["pdfs"][name] = pdf_bytes
-
+    
     st.success("PDF generation completed!")
 
 
