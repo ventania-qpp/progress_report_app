@@ -92,13 +92,25 @@ if st.button("Create PDF"):
             base = Image.open("template.png").convert("RGB")
             draw = ImageDraw.Draw(base)
 
-            # フォント（Streamlit Cloud では DejaVu が使える）
-            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 48)
+            # フォント（Cloud で使えるフォント）
+            font_big = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 60)
+            font_mid = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 48)
+            font_small = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 36)
 
-            # 例：名前・Corda・Age を配置（座標は調整してね）
-            draw.text((200, 300), f"Name: {student['Display_Name']}", fill="black", font=font)
-            draw.text((200, 400), f"Corda: {student['Corda_Name_EN']}", fill="black", font=font)
-            draw.text((200, 500), f"Age: {student['Age']}", fill="black", font=font)
+            # Name / Age
+            draw.text((200, 300), f"{student['Display_Name']}", fill="black", font=font_big)
+            draw.text((200, 420), f"Age: {student['Age']}", fill="black", font=font_mid)
+
+            # Total Points
+            draw.text((200, 600), f"{student['Spreadsheet_Total']} pt", fill="black", font=font_big)
+
+            # Corda Tag
+            draw.text((200, 900), f"{student['Corda_Name_EN']}", fill="black", font=font_big)
+
+            # ▲ の位置
+            pos = float(student["Corda_Name_ENPos"])
+            x_pos = int(200 + (pos / 100) * 1800)
+            draw.text((x_pos, 780), "▲", fill="black", font=font_big)
 
             # PNG を一時保存
             base.save("temp_output.png")
@@ -108,7 +120,7 @@ if st.button("Create PDF"):
             # -----------------------------
             pdf = FPDF()
             pdf.add_page()
-            pdf.image("temp_output.png", x=0, y=0, w=210, h=297)  # A4 サイズ
+            pdf.image("temp_output.png", x=0, y=0, w=210, h=297)
 
             pdf.output("report.pdf")
 
