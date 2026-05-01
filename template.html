@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  /* ===== Base ===== */
+  body {
+    font-family: "Noto Sans JP", sans-serif;
+    padding: 40px;
+    background: white;
+  }
+
+  /* ===== Header ===== */
+  .header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 5px;
+  }
+
+  .header-title {
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 0px;
+  }
+
+  .header-period {
+    font-size: 16px;
+    color: #555;
+  }
+
+  .header-line {
+    width: 100%;
+    height: 3px;
+    background-color: #1976d2;
+    margin-top: 0px;
+    margin-bottom: 20px;
+  }
+
+  /* ===== Info Rows (Name / Age) ===== */
+  .info-row {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 40px;
+    margin-bottom: 10px;
+  }
+
+  .info-label {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 2px;
+  }
+
+  .info-value {
+    font-size: 16px;
+    font-weight: normal;
+    line-height: 1.2;
+  }
+
+  /* ===== Generic Label / Value ===== */
+  .label {
+    font-size: 14px;
+    color: #555;
+  }
+
+  .value {
+    font-size: 20px;
+    margin-bottom: 12px;
+  }
+
+  /* ===== Band Bar ===== */
+  .band-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #777;
+    margin-bottom: 0px;
+    line-height: 1.0;
+    position: relative;
+    top: 10px;
+  }
+
+  .band-bar {
+      height: 24px;
+      background: linear-gradient(to right,
+        #c6c6c6 0%,      /* Gray */
+        #2e7d32 26%,     /* Green */
+        #fdd835 50%,     /* Yellow */
+        #1976d2 80%,     /* Blue */
+        #78fd1f 100%     /* Green-Yelllow */
+      );
+      margin: 28px 0 12px 0;
+  }
+
+  .Corda_Name_EN-marker {
+    position: relative;
+    top: -18px;
+    font-size: 20px;
+    color: #000;
+  }
+
+  /* ===== Corda Tag ===== */
+  .corda-tag {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    color: white;
+  }
+
+.corda-gray { background-color: #888; }
+.corda-gray-green { background-color: #4f8f6b; }
+.corda-green { background-color: #2e7d32; }
+.corda-gray-yellow { background-color: #f4e06b; color: #000; }
+.corda-yellow { background-color: #fdd835; color: #000; }
+.corda-gray-blue { background-color: #4a6fa5; }
+.corda-blue { background-color: #1976d2; }
+.corda-advanced-plus {background-color: #fff; color: #000; }
+
+</style>
+</head>
+<body>
+
+<!-- ===== Header ===== -->
+<div class="header-row">
+  <div class="header-title">Progress Points Report</div>
+  <div class="header-period">{Period}</div>
+</div>
+
+<div class="header-line"></div>
+
+<!-- ===== Name / Age ===== -->
+<div class="info-row">
+  <div>
+    <div class="info-label">Name</div>
+    <div class="info-value">{Display_Name}</div>
+  </div>
+
+  <div>
+    <div class="info-label">Age</div>
+    <div class="info-value">{Age}</div>
+  </div>
+</div>
+
+<!-- ===== Total Points ===== -->
+<div class="label">Total Points</div>
+<div class="value">{Spreadsheet_Total} pt</div>
+
+<!-- ===== Band Bar ===== -->
+<div class="band-labels">
+  <div>Gray</div>
+  <div>Green</div>
+  <div>Yellow</div>
+  <div>Blue</div>
+  <div>Greem/Yellow</div>
+</div>
+
+<div class="band-bar"></div>
+<div class="Corda_Name_EN-marker" style="left:{Corda_Name_ENPos}%;">▲</div>
+
+<!-- ===== Current Corda ===== -->
+<div class="label">Current Corda</div>
+<div class="value">
+  <span class="corda-tag corda-{Corda_Name_ENLower}">{Corda_Name_EN}</span>
+</div>
+
+</body>
+</html>
